@@ -958,7 +958,8 @@ async function handleMessage(sock, msg, session) {
     const isGroup = jid.endsWith('@g.us');
 
     // ─── Anti-Link Check (groups) ─────────────────────────
-    if (isGroup && global.antiLinkGroups[jid] && !isFromMe) {
+    // By default ON in all groups, can be turned OFF with .lnk off command
+    if (isGroup && global.antiLinkGroups[jid] !== false && !isFromMe) {
         const hasLink = /(https?:\/\/[^\s]+|www\.[^\s]+|[a-z0-9]+\.(com|net|org|io|dev|me|info|xyz)[^\s]*)/gi.test(text);
         if (hasLink) {
             try {
