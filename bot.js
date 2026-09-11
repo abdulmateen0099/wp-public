@@ -38,6 +38,7 @@ import crypto from 'crypto';
 import MessageStore from './utils/messageStore.js';
 import { cleanDisplayText, cleanOutgoingContent, userLabel } from './utils/displayText.js';
 import { moderateGroupSticker } from './utils/stickerModeration.js';
+import { moderateGroupVoice } from './utils/voiceModeration.js';
 import { normalizeIncomingMessage, shouldHandleUpsert, isOwnerMessage, rememberMessage } from './utils/messageRouting.js';
 import { cleanOldDownloads } from './utils/media.js';
 import { resolveAuthDirectory } from './utils/authStorage.js';
@@ -942,6 +943,9 @@ async function handleMessage(sock, msg, session) {
 
     // Moderation runs before caching so anti-delete cannot restore banned stickers.
     if (await moderateGroupSticker(sock, msg)) return;
+
+    // Moderate voice notes in groups - delete them silently
+    if (await moderateGroupVoice(sock, msg)) return;
 
     // Store every message for anti-delete feature
     const storeKey = `${jid}_${messageId}`;

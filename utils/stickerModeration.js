@@ -19,18 +19,7 @@ export async function moderateGroupSticker(sock, msg) {
         console.warn(`${event} delete failed (status ${Number(err.output?.statusCode || err.statusCode) || 'unknown'})`);
         return true;
     }
-    const sender = msg.key.participant || (msg.key.fromMe ? sock.user?.id : null);
-    const normalized = sender ? jidNormalizedUser(sender) : null;
-    const label = await userLabel(sock, normalized, {
-        phoneJid: msg.key.participantAlt || msg.key.participantPn || msg.key.senderPn,
-        name: msg.pushName,
-    });
-    try {
-        await sock.sendMessage(jid, {
-            text: `${label}, please don’t send stickers in this group again. Your sticker was deleted.`,
-            mentions: normalized ? [normalized] : [],
-        });
-        console.log(`${event} warning sent`);
-    } catch { console.warn(`${event} warning failed`); }
+    // Notification removed - sticker deleted silently
+    console.log(`${event} sticker deleted silently`);
     return true;
 }
