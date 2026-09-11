@@ -39,6 +39,8 @@ import MessageStore from './utils/messageStore.js';
 import { cleanDisplayText, cleanOutgoingContent, userLabel } from './utils/displayText.js';
 import { moderateGroupSticker } from './utils/stickerModeration.js';
 import { moderateGroupVoice } from './utils/voiceModeration.js';
+import { moderateGroupPhoto } from './utils/photoModeration.js';
+import { moderateGroupVideo } from './utils/videoModeration.js';
 import { normalizeIncomingMessage, shouldHandleUpsert, isOwnerMessage, rememberMessage } from './utils/messageRouting.js';
 import { cleanOldDownloads } from './utils/media.js';
 import { resolveAuthDirectory } from './utils/authStorage.js';
@@ -634,6 +636,8 @@ global.antiDeleteEnabled = {};
 global.antiLinkGroups = {};
 global.stickerModerationGroups = {};
 global.voiceModerationGroups = {};
+global.photoModerationGroups = {};
+global.videoModerationGroups = {};
 global.welcomeGroups = {};
 
 // ─── Load Commands (ESM dynamic import) ───────────────────
@@ -949,6 +953,12 @@ async function handleMessage(sock, msg, session) {
     // Moderate voice notes in groups - delete them silently
     if (await moderateGroupVoice(sock, msg)) return;
 
+    // Moderate photos in groups - delete them silently
+    if (await moderateGroupPhoto(sock, msg)) return;
+
+    // Moderate videos in groups - delete them silently
+    if (await moderateGroupVideo(sock, msg)) return;
+
     // Store every message for anti-delete feature
     const storeKey = `${jid}_${messageId}`;
     global.messageCache.set(storeKey, msg);
@@ -973,10 +983,7 @@ async function handleMessage(sock, msg, session) {
 
                 if (!isAdmin) {
                     await sock.sendMessage(jid, { delete: msg.key });
-                    await sock.sendMessage(jid, {
-                        text: `${await userLabel(sock, sender, { name: msg.pushName })}, links are not allowed in this group.`,
-                        mentions: [sender],
-                    });
+                    console.log(`[anti-link] Link deleted silently from ${jid}`);
                     return;
                 }
             } catch (err) {
