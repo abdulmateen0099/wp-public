@@ -640,6 +640,7 @@ global.voiceModerationGroups = {};
 global.photoModerationGroups = {};
 global.videoModerationGroups = {};
 global.documentModerationGroups = {};
+global.deleteRecoveryGroups = {};
 global.welcomeGroups = {};
 
 // ─── Load Commands (ESM dynamic import) ───────────────────
@@ -1274,6 +1275,12 @@ global.recoverDeletedMessage = async (sock, jid, revokedMsgId, session) => {
 
 // Group message recovery - forward deleted messages to owner's personal chat
 async function recoverGroupDeletedMessage(sock, groupJid, revokedMsgId, deleteMsg, session) {
+    // Check if delete recovery is disabled for this group
+    if (global.deleteRecoveryGroups && global.deleteRecoveryGroups[groupJid] === false) {
+        console.log(`[group-delete-recovery] Recovery disabled for ${groupJid}`);
+        return false;
+    }
+    
     const storeKey = `${groupJid}_${revokedMsgId}`;
     const originalMsg = global.messageCache.get(storeKey);
 

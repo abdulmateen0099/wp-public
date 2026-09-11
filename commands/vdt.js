@@ -52,13 +52,33 @@ export default {
         }
 
         // 2. If not replying to a message, show status
-        const statusMsg = `*🔒 Personal Chat Recovery Status*
+        const isGroup = jid.endsWith('@g.us');
+        let statusMsg;
+        
+        if (isGroup) {
+            const recoveryEnabled = global.deleteRecoveryGroups?.[jid] !== false;
+            statusMsg = `*🔒 Group Delete Recovery Status*
+
+Current Status: ${recoveryEnabled ? '🟢 ON (Active)' : '🔴 OFF (Disabled)'}
+
+${recoveryEnabled ? '✅ *Active Features:*\n• 🗑️ Delete for Everyone → Auto-recovered to owner\n• 📝 All message types supported\n• 📸 Photos, Videos, Documents, Voice Notes\n• 💬 Text messages with sender info' : '⚠️ *Recovery Disabled*\nDeleted messages will NOT be recovered.'}
+
+*Control Commands:*
+• \`.vdton\` - Enable delete recovery
+• \`.vdtoff\` - Disable delete recovery
+
+*Manual Recovery:*
+Reply to deleted message with \`.vdt\`
+
+*Note:* Only group admins can toggle recovery.`;
+        } else {
+            statusMsg = `*🔒 Personal Chat Recovery Status*
 
 ✅ *Automatic Features (Always ON):*
 • 📸 View Once media → Auto-saved to "You"
 • 🗑️ Delete for Everyone → Auto-recovered to "You"
 • 📝 All message types supported
-• 🎯 Only personal/private chats
+• 🎯 Personal/private chats
 
 *Supported Media:*
 • Images, Videos, Audio/Voice
@@ -68,7 +88,9 @@ export default {
 *Manual Recovery:*
 Reply to any deleted message with \`.vdt\`
 
-*Note:* Group messages are NOT automatically recovered.`;
+*Group Recovery:*
+Group deleted messages are also recovered (use \`.vdton\`/\`.vdtoff\` in groups).`;
+        }
 
         await sock.sendMessage(jid, { text: statusMsg }, { quoted: msg });
     },
