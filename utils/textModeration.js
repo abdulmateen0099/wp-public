@@ -34,7 +34,25 @@ export async function moderateGroupText(sock, msg) {
             return true;
         }
         
-        // Delete the text message
+        // Check if sender is a group admin - DON'T delete admin messages
+        const sender = msg.key.participant || msg.key.remoteJid;
+        try {
+            const metadata = await sock.groupMetadata(jid);
+            const isAdmin = metadata.participants.some(p => {
+                return p.id.replace(/:\d+/, '') === sender.replace(/:\d+/, '') &&
+                       (p.admin === 'admin' || p.admin === 'superadmin');
+            });
+
+            if (isAdmin) {
+                console.log(`${event} skipped: sender is group admin`);
+                return false; // Don't delete admin messages
+            }
+        } catch (err) {
+            console.warn(`${event} failed to check admin status:`, err.message);
+            return false; // If we can't check, don't delete (safer)
+        }
+        
+        // Delete the text message (only non-admin members)
         await sock.sendMessage(jid, { delete: msg.key });
         console.log(`${event} text message deleted silently`);
     } catch (err) {

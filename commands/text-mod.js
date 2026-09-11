@@ -29,7 +29,7 @@ export default {
             // txton - turn ON
             global.textModerationGroups[jid] = true;
             await sock.sendMessage(jid, {
-                text: '🔒 *Text Message Moderation: ON*\n\nText messages will be automatically deleted (silently).\n\n⚠️ *Warning:* Members will not be able to send text messages.\n\n💡 Use `.txtoff` to disable.',
+                text: '🔒 *Text Message Moderation: ON*\n\nMembers\' text messages will be automatically deleted (silently).\n\n✅ *Admin messages are ALLOWED*\n\n⚠️ *Warning:* Only members will be restricted.\n\n💡 Use `.txtoff` to disable.',
             }, { quoted: msg });
         }
     },
