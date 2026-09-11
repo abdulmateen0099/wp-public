@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>WhatsApp Bot Dashboard | Link Device</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=5.0.0">
+</head>
+<body>
+
+  <!-- Login Gate (Shown before accessing dashboard) -->
+  <div id="authGate" class="auth-gate-container">
+    <div class="auth-card">
+
+
+      <div class="auth-hero" style="text-align: center;">
+        <h3>Sign In to Dashboard</h3>
+        <p>Please enter your administrator credentials to manage WhatsApp automation.</p>
+      </div>
+
+      <form id="authLoginForm" class="auth-form" onsubmit="return false;">
+        <div class="input-group">
+          <label for="authUsername">Username</label>
+          <div class="auth-input-wrapper">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <input type="text" id="authUsername" placeholder="Enter username" autocomplete="username" required />
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="authPassword">Password</label>
+          <div class="auth-input-wrapper">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            <input type="password" id="authPassword" placeholder="••••••••" autocomplete="current-password" required />
+          </div>
+        </div>
+
+        <div id="authErrorMsg" class="alert-box alert-error hidden"></div>
+
+        <button type="submit" id="authSubmitBtn" class="btn btn-primary btn-block">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+            <polyline points="10 17 15 12 10 7"></polyline>
+            <line x1="15" y1="12" x2="3" y2="12"></line>
+          </svg>
+          <span>Sign In</span>
+        </button>
+
+
+      </form>
+    </div>
+  </div>
+
+  <div id="dashboardApp" class="app-container hidden">
+    <!-- Header -->
+    <header class="app-header">
+
+      <div class="header-actions">
+        <div id="statusPill" class="status-pill status-loading">
+          <span class="status-dot"></span>
+          <span id="statusText">Connecting...</span>
+        </div>
+        <button id="headerLogoutBtn" class="btn-icon-logout hidden" title="Log Out from WhatsApp">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          <span>Unlink WA</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Multi-Account Bar -->
+    <div class="accounts-strip">
+      <div class="accounts-strip-header">
+        <div class="accounts-label">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+            <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+          </svg>
+          <span>Linked WhatsApp Accounts</span>
+        </div>
+        <div class="accounts-actions">
+          <button id="cleanInactiveBtn" class="btn-clean-inactive hidden" type="button" onclick="window.cleanInactiveAccounts()" title="Remove unconnected accounts">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            <span>Clean Inactive</span>
+          </button>
+          <button id="addAccountBtn" class="btn-add-account" type="button" onclick="window.createNewAccount()" title="Link another WhatsApp account">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>Add WhatsApp</span>
+          </button>
+          <button id="dashLogoutBtn" class="btn-dash-logout" type="button" title="Sign out from dashboard">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            <span>Sign Out</span>
+          </button>
+        </div>
+      </div>
+      <div id="accountsList" class="accounts-pills">
+        <!-- Rendered dynamically via app.js -->
+      </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="main-card">
+      
+      <!-- SCREEN 1: ADD PHONE NUMBER (DEFAULT IDLE) -->
+      <section id="phoneSection" class="view-section">
+        <div class="card-hero">
+          <h2>Link WhatsApp Account</h2>
+          <p>Choose your preferred method to connect: get an instant 8-digit Pairing Code or scan via QR Code.</p>
+        </div>
+
+        <form id="phoneForm" class="phone-form" onsubmit="return false;">
+          <div class="input-group">
+            <label for="phoneInput">WhatsApp Phone Number</label>
+            <div class="phone-input-wrapper">
+              <span class="phone-prefix">+</span>
+              <input 
+                type="tel" 
+                id="phoneInput" 
+                placeholder="923321234567" 
+                autocomplete="tel"
+                required
+              />
+            </div>
+            <span class="input-hint">Include your country code (e.g. <code>92</code> for PK, <code>1</code> for US, <code>91</code> for IN) without '+' or spaces.</span>
+          </div>
+
+          <div id="phoneError" class="alert-box alert-error hidden"></div>
+
+          <button type="submit" id="getPairingBtn" class="btn btn-primary btn-block">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            <span>Get 8-Digit Pairing Code</span>
+          </button>
+
+          <div class="form-divider">
+            <span>OR</span>
+          </div>
+
+          <button type="button" id="startQrBtn" class="btn btn-secondary btn-block">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            <span>Scan with QR Code</span>
+          </button>
+        </form>
+      </section>
+
+      <!-- SCREEN 2: PAIRING CODE DISPLAY -->
+      <section id="pairingSection" class="view-section hidden">
+        <div class="card-hero">
+          <h2>Enter Code on WhatsApp</h2>
+          <p>Open WhatsApp on your phone and enter this 8-digit pairing code to link.</p>
+        </div>
+
+        <div class="pairing-container">
+          <!-- Code Card -->
+          <div class="pairing-code-card">
+            <div id="pairingCodeDisplay" class="pairing-code-text">---- ----</div>
+            <button id="copyCodeBtn" class="btn btn-copy" title="Copy code">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <span id="copyBtnText">Copy Code</span>
+            </button>
+          </div>
+
+          <!-- Timer with progress bar -->
+          <div class="timeout-timer-card">
+            <div class="timer-label">
+              <span>Expires in:</span>
+              <strong id="pairingTimerSec">60s</strong>
+            </div>
+            <div class="progress-bar-track">
+              <div id="pairingProgress" class="progress-bar-fill" style="width: 100%;"></div>
+            </div>
+            <span class="timer-sub">Auto-returns to number screen if not linked</span>
+          </div>
+        </div>
+
+        <div class="instructions-card">
+          <h3>How to enter this code on your phone:</h3>
+          <ol class="steps-list">
+            <li>
+              <span class="step-num">1</span>
+              <span>Open <strong>WhatsApp</strong> on your mobile phone.</span>
+            </li>
+            <li>
+              <span class="step-num">2</span>
+              <span>Tap <strong>Menu</strong> (Android: 3 dots) or <strong>Settings</strong> (iPhone).</span>
+            </li>
+            <li>
+              <span class="step-num">3</span>
+              <span>Tap <strong>Linked Devices</strong> → <strong>Link a Device</strong>.</span>
+            </li>
+            <li>
+              <span class="step-num">4</span>
+              <span>Tap <strong>"Link with phone number instead"</strong> at bottom.</span>
+            </li>
+            <li>
+              <span class="step-num">5</span>
+              <span>Enter the 8-digit code shown above!</span>
+            </li>
+          </ol>
+        </div>
+
+        <button id="cancelPairingBtn" class="btn btn-ghost">
+          <span>Cancel & Enter Different Number</span>
+        </button>
+      </section>
+
+      <!-- SCREEN 3: QR CODE WITH 60s AUTO-TIMEOUT -->
+      <section id="qrSection" class="view-section hidden">
+        <div class="card-hero">
+          <h2>Scan QR Code</h2>
+          <p>Scan this QR code with WhatsApp on your phone to link your account.</p>
+        </div>
+
+        <div class="qr-container-wrapper">
+          <div class="qr-box">
+            <div class="qr-scanner-line"></div>
+            <div id="qrDisplay" class="qr-display">
+              <div class="qr-spinner"></div>
+              <p class="qr-loading-text">Generating QR code...</p>
+            </div>
+          </div>
+          
+          <!-- QR Countdown Timer -->
+          <div class="timeout-timer-card" style="width: 290px;">
+            <div class="timer-label">
+              <span>QR expires in:</span>
+              <strong id="qrTimerSec">60s</strong>
+            </div>
+            <div class="progress-bar-track">
+              <div id="qrProgress" class="progress-bar-fill" style="width: 100%;"></div>
+            </div>
+            <span class="timer-sub">Auto-returns to number screen if not scanned</span>
+          </div>
+        </div>
+
+        <div class="instructions-card">
+          <h3>How to link your device:</h3>
+          <ol class="steps-list">
+            <li>
+              <span class="step-num">1</span>
+              <span>Open <strong>WhatsApp</strong> on your mobile phone.</span>
+            </li>
+            <li>
+              <span class="step-num">2</span>
+              <span>Tap <strong>Menu</strong> (3 dots) or <strong>Settings</strong>.</span>
+            </li>
+            <li>
+              <span class="step-num">3</span>
+              <span>Select <strong>Linked Devices</strong> → <strong>Link a Device</strong>.</span>
+            </li>
+            <li>
+              <span class="step-num">4</span>
+              <span>Point your camera at this QR code.</span>
+            </li>
+          </ol>
+        </div>
+
+        <button id="cancelQrBtn" class="btn btn-ghost">
+          <span>Cancel & Return to Phone Number</span>
+        </button>
+      </section>
+
+      <!-- SCREEN 4: CONNECTED DASHBOARD -->
+      <section id="connectedSection" class="view-section hidden">
+        <div class="connected-hero">
+          <div class="success-ring">
+            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 6L9 17l-5-5"/>
+            </svg>
+          </div>
+          <h2>Bot Connected & Online!</h2>
+          <p>Your WhatsApp automation bot is active and ready to handle commands.</p>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Logged In As</div>
+            <div id="statName" class="stat-value">WhatsApp User</div>
+            <div id="statNumber" class="stat-sub">...</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Bot Prefix</div>
+            <div id="statPrefix" class="stat-value">.</div>
+            <div class="stat-sub">e.g. .menu, .ping</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Loaded Commands</div>
+            <div id="statCommands" class="stat-value">12</div>
+            <div class="stat-sub">Ready to execute</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Uptime</div>
+            <div id="statUptime" class="stat-value">0s</div>
+            <div class="stat-sub">Docker container</div>
+          </div>
+        </div>
+
+        <div class="quick-commands-card">
+          <h3>Popular Commands</h3>
+          <div class="commands-chips">
+            <span class="chip" onclick="window.insertTerminalCmd('.menu')" title="Click to view command help in terminal"><code>.menu</code> All commands</span>
+            <span class="chip" onclick="window.insertTerminalCmd('.ping')" title="Click to view command help in terminal"><code>.ping</code> Check speed</span>
+            <span class="chip" onclick="window.insertTerminalCmd('.op')" title="Click to view command help in terminal"><code>.op</code> Save View-Once</span>
+            <span class="chip" onclick="window.insertTerminalCmd('.str')" title="Click to view command help in terminal"><code>.str</code> Make Sticker</span>
+            <span class="chip" onclick="window.insertTerminalCmd('.vdt')" title="Click to view command help in terminal"><code>.vdt</code> Anti-delete</span>
+            <span class="chip" onclick="window.insertTerminalCmd('.add')" title="Click to view command help in terminal"><code>.add</code> Add member</span>
+            <span class="chip" onclick="window.insertTerminalCmd('.unmute')" title="Click to view command help in terminal"><code>.unmute</code> Unmute group</span>
+            <span class="chip" onclick="window.insertTerminalCmd('.lnk')" title="Click to view command help in terminal"><code>.lnk</code> Anti-link</span>
+          </div>
+        </div>
+
+        <!-- Account Controls -->
+        <div class="account-actions-card">
+          <div class="account-actions-info">
+            <h4>Disconnect Session</h4>
+            <p>Unlink this WhatsApp account. You can log in again with any number or QR code.</p>
+          </div>
+          <button id="logoutBtn" class="btn btn-danger">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            <span>Log Out from WhatsApp</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- SCREEN 5: DISCONNECTED / RECONNECTING -->
+      <section id="disconnectedSection" class="view-section hidden">
+        <div class="card-hero">
+          <div class="warn-ring">
+            <svg viewBox="0 0 24 24" width="42" height="42" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+          </div>
+          <h2>Session Disconnected</h2>
+          <p id="disconnectedMessage">Attempting to reconnect automatically...</p>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Interactive Web CMD / Terminal -->
+    <section class="terminal-card">
+      <div class="terminal-header">
+        <div class="terminal-controls">
+          <span class="control-dot dot-red"></span>
+          <span class="control-dot dot-yellow"></span>
+          <span class="control-dot dot-green"></span>
+        </div>
+        <div class="terminal-title">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 17 10 11 4 5"></polyline>
+            <line x1="12" y1="19" x2="20" y2="19"></line>
+          </svg>
+          <span class="term-title-text">whatsapp-bot@docker:~$</span>
+        </div>
+        <div class="terminal-actions">
+          <button id="terminalTabCmd" class="term-tab active" type="button"><span class="tab-long">Interactive </span>CMD</button>
+          <button id="terminalTabLogs" class="term-tab" type="button"><span class="tab-long">Live </span>Logs</button>
+          <button id="terminalClearBtn" class="term-btn-icon" type="button" title="Clear Screen">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
+          <button id="terminalToggleCollapseBtn" class="term-btn-icon term-collapse-btn" type="button" title="Minimize / Expand Terminal">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Terminal Output Area -->
+      <div id="terminalBody" class="terminal-body">
+        <div class="term-line term-system">WhatsApp Bot Interactive Terminal [Web Console v1.0]</div>
+        <div class="term-line term-dim">Type <span class="term-cyan">help</span> for commands, <span class="term-cyan">status</span> for stats, or <span class="term-cyan">.menu</span> to list bot tools.</div>
+        <div class="term-line term-dim">────────────────────────────────────────────────────────────────</div>
+      </div>
+
+      <!-- Command Input Prompt -->
+      <form id="terminalForm" class="terminal-input-bar">
+        <span class="term-prompt"><span class="prompt-long">bot@whatsapp:</span>~$</span>
+        <input 
+          type="text" 
+          id="terminalInput" 
+          class="terminal-input" 
+          placeholder="Type command (help, status, .ping, .menu)..." 
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button type="submit" class="term-run-btn">Run ↵</button>
+      </form>
+    </section>
+
+    <!-- Logout Confirmation Modal -->
+    <div id="logoutModal" class="modal-backdrop hidden">
+      <div class="modal-card">
+        <div class="modal-icon">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+        </div>
+        <h3>Unlink WhatsApp?</h3>
+        <p>Are you sure you want to log out? This will disconnect the bot and return to the login screen.</p>
+        <div class="modal-actions">
+          <button id="cancelLogoutBtn" class="btn btn-secondary">Cancel</button>
+          <button id="confirmLogoutBtn" class="btn btn-danger">Yes, Log Out</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="app.js?v=4.2.0"></script>
+</body>
+</html>
