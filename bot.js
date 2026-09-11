@@ -935,7 +935,15 @@ async function handleMessage(sock, msg, session) {
     const protocol = normalizeIncomingMessage(msg).message?.protocolMessage;
     if (protocol?.type === proto.Message.ProtocolMessage.Type.REVOKE) {
         console.log(`[delete-detection] Delete for everyone detected from=${jid} msgId=${protocol.key?.id}`);
-        await session.personalRecovery.recover(sock, jid, protocol.key?.id, session);
+        
+        // Handle recovery for both personal and group chats
+        if (jid.endsWith('@g.us')) {
+            // Group message deleted - recover to owner's personal chat
+            await recoverGroupDeletedMessage(sock, jid, protocol.key?.id, msg, session);
+        } else {
+            // Personal chat deleted - use existing recovery
+            await session.personalRecovery.recover(sock, jid, protocol.key?.id, session);
+        }
         return;
     }
 
@@ -1172,7 +1180,15 @@ async function handleMessageUpdate(sock, update, session) {
     }
     
     console.log(`[delete-detection] Revoke detected via messages.update from=${jid} msgId=${protocol?.key?.id || msgId}`);
-    await session.personalRecovery.recover(sock, jid, protocol?.key?.id || msgId, session);
+    
+    // Handle recovery for both personal and group chats
+    if (jid.endsWith('@g.us')) {
+        // Group message deleted - recover to owner's personal chat
+        await recoverGroupDeletedMessage(sock, jid, protocol?.key?.id || msgId, update, session);
+    } else {
+        // Personal chat deleted - use existing recovery
+        await session.personalRecovery.recover(sock, jid, protocol?.key?.id || msgId, session);
+    }
 }
 
 // Ensure this is global so .vdt can trigger it on demand!
@@ -1255,6 +1271,118 @@ global.recoverDeletedMessage = async (sock, jid, revokedMsgId, session) => {
         return false;
     }
 };
+
+// Group message recovery - forward deleted messages to owner's personal chat
+async function recoverGroupDeletedMessage(sock, groupJid, revokedMsgId, deleteMsg, session) {
+    const storeKey = `${groupJid}_${revokedMsgId}`;
+    const originalMsg = global.messageCache.get(storeKey);
+
+    if (!originalMsg) {
+        console.log(`[group-delete-recovery] Message not found in cache: ${revokedMsgId}`);
+        return false;
+    }
+
+    // Get owner's personal chat JID
+    const botNumber = session?.user?.number || sock.user?.id?.split('@')[0]?.split(':')[0];
+    const ownerJid = botNumber ? `${botNumber}@s.whatsapp.net` : null;
+    
+    if (!ownerJid) {
+        console.log(`[group-delete-recovery] Owner JID not found`);
+        return false;
+    }
+
+    try {
+        // Get group name
+        let groupName = 'Unknown Group';
+        try {
+            const metadata = await sock.groupMetadata(groupJid);
+            groupName = metadata.subject || groupJid;
+        } catch (e) {
+            groupName = groupJid;
+        }
+
+        // Get sender info
+        const senderJid = originalMsg.key.participant || originalMsg.key.remoteJid;
+        const senderLabel = await userLabel(sock, senderJid, { 
+            name: originalMsg.pushName, 
+            phoneJid: originalMsg.key.participantPn || originalMsg.key.senderPn 
+        });
+
+        const originalText = extractMessageText(originalMsg);
+
+        // Build notification message
+        let notificationText = `🗑️ *Deleted Message Recovered*\n\n`;
+        notificationText += `📱 *Group:* ${groupName}\n`;
+        notificationText += `👤 *From:* ${senderLabel}\n`;
+        
+        if (originalText) {
+            notificationText += `\n💬 *Message:*\n${originalText}`;
+        }
+
+        // Send notification to owner's personal chat
+        await sock.sendMessage(ownerJid, {
+            text: notificationText,
+            mentions: [senderJid],
+        });
+
+        console.log(`[group-delete-recovery] Notification sent for ${revokedMsgId}`);
+
+        // Try to recover media if present
+        const extractedMedia = extractMediaMessage(originalMsg.message);
+
+        if (extractedMedia) {
+            try {
+                const { type, msg: mediaMsg } = extractedMedia;
+                
+                const stream = await downloadContentFromMessage(
+                    mediaMsg,
+                    type === 'document' ? 'document' : type
+                );
+
+                let buffer = Buffer.from([]);
+                for await (const chunk of stream) {
+                    buffer = Buffer.concat([buffer, chunk]);
+                }
+
+                const caption = `📎 *Deleted ${type.toUpperCase()} from ${groupName}*`;
+
+                if (type === 'image') {
+                    await sock.sendMessage(ownerJid, { image: buffer, caption });
+                } else if (type === 'video') {
+                    await sock.sendMessage(ownerJid, { video: buffer, caption });
+                } else if (type === 'audio') {
+                    await sock.sendMessage(ownerJid, { 
+                        audio: buffer, 
+                        mimetype: mediaMsg.mimetype || 'audio/mp4',
+                        ptt: mediaMsg.ptt || false,
+                        caption
+                    });
+                } else if (type === 'document') {
+                    await sock.sendMessage(ownerJid, {
+                        document: buffer,
+                        mimetype: mediaMsg.mimetype || 'application/octet-stream',
+                        fileName: mediaMsg.fileName || 'recovered_file',
+                        caption,
+                    });
+                } else if (type === 'sticker') {
+                    await sock.sendMessage(ownerJid, { 
+                        sticker: buffer,
+                        caption
+                    });
+                }
+                
+                console.log(`[group-delete-recovery] Media sent: ${type}`);
+            } catch (mediaErr) {
+                console.error(`[group-delete-recovery] Failed to recover media:`, mediaErr.message);
+            }
+        }
+        
+        return true;
+    } catch (err) {
+        console.error(`[group-delete-recovery] Error:`, err);
+        return false;
+    }
+}
 
 // ─── Utility: Extract text from any message type ─────────
 function extractMessageText(msg) {
