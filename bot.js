@@ -632,6 +632,8 @@ dashboardServer.on('error', err => {
 global.messageCache = new MessageStore(10000);
 global.antiDeleteEnabled = {};
 global.antiLinkGroups = {};
+global.stickerModerationGroups = {};
+global.voiceModerationGroups = {};
 global.welcomeGroups = {};
 
 // ─── Load Commands (ESM dynamic import) ───────────────────

@@ -9,6 +9,11 @@ export async function moderateGroupVoice(sock, msg) {
     const audioMsg = messageContent?.audioMessage;
     if (!jid?.endsWith('@g.us') || !audioMsg || !audioMsg.ptt) return false;
     
+    // Check if voice moderation is disabled for this group
+    if (global.voiceModerationGroups && global.voiceModerationGroups[jid] === false) {
+        return false; // Moderation is OFF, allow voice notes
+    }
+    
     const event = `[voice-moderation] chat=${jid} message=${msg.key.id}`;
     console.log(`${event} detected voice note`);
     

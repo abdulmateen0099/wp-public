@@ -5,6 +5,12 @@ import { userLabel } from './displayText.js';
 export async function moderateGroupSticker(sock, msg) {
     const jid = msg.key.remoteJid;
     if (!jid?.endsWith('@g.us') || !normalizeMessageContent(msg.message)?.stickerMessage) return false;
+    
+    // Check if sticker moderation is disabled for this group
+    if (global.stickerModerationGroups && global.stickerModerationGroups[jid] === false) {
+        return false; // Moderation is OFF, allow stickers
+    }
+    
     const event = `[sticker-moderation] chat=${jid} message=${msg.key.id}`;
     console.log(`${event} detected`);
     try {
