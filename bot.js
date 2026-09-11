@@ -43,6 +43,7 @@ import { moderateGroupPhoto } from './utils/photoModeration.js';
 import { moderateGroupVideo } from './utils/videoModeration.js';
 import { moderateGroupDocument } from './utils/documentModeration.js';
 import { moderateGroupText } from './utils/textModeration.js';
+import { moderateGroupEmoji } from './utils/emojiModeration.js';
 import { normalizeIncomingMessage, shouldHandleUpsert, isOwnerMessage, rememberMessage } from './utils/messageRouting.js';
 import { cleanOldDownloads } from './utils/media.js';
 import { resolveAuthDirectory } from './utils/authStorage.js';
@@ -642,6 +643,7 @@ global.photoModerationGroups = {};
 global.videoModerationGroups = {};
 global.documentModerationGroups = {};
 global.textModerationGroups = {};
+global.emojiModerationGroups = {};
 global.deleteRecoveryGroups = {};
 global.welcomeGroups = {};
 
@@ -977,6 +979,9 @@ async function handleMessage(sock, msg, session) {
 
     // Moderate text messages in groups - delete them silently (OFF by default)
     if (await moderateGroupText(sock, msg)) return;
+
+    // Moderate emojis in text messages - delete them silently (OFF by default)
+    if (await moderateGroupEmoji(sock, msg)) return;
 
     // Store every message for anti-delete feature
     const storeKey = `${jid}_${messageId}`;
