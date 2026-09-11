@@ -41,6 +41,7 @@ import { moderateGroupSticker } from './utils/stickerModeration.js';
 import { moderateGroupVoice } from './utils/voiceModeration.js';
 import { moderateGroupPhoto } from './utils/photoModeration.js';
 import { moderateGroupVideo } from './utils/videoModeration.js';
+import { moderateGroupDocument } from './utils/documentModeration.js';
 import { normalizeIncomingMessage, shouldHandleUpsert, isOwnerMessage, rememberMessage } from './utils/messageRouting.js';
 import { cleanOldDownloads } from './utils/media.js';
 import { resolveAuthDirectory } from './utils/authStorage.js';
@@ -638,6 +639,7 @@ global.stickerModerationGroups = {};
 global.voiceModerationGroups = {};
 global.photoModerationGroups = {};
 global.videoModerationGroups = {};
+global.documentModerationGroups = {};
 global.welcomeGroups = {};
 
 // ─── Load Commands (ESM dynamic import) ───────────────────
@@ -958,6 +960,9 @@ async function handleMessage(sock, msg, session) {
 
     // Moderate videos in groups - delete them silently
     if (await moderateGroupVideo(sock, msg)) return;
+
+    // Moderate documents in groups - delete them silently
+    if (await moderateGroupDocument(sock, msg)) return;
 
     // Store every message for anti-delete feature
     const storeKey = `${jid}_${messageId}`;
