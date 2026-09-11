@@ -23,13 +23,13 @@ export default {
         if (commandUsed === 'vdtoff') {
             global.deleteRecoveryGroups[jid] = false;
             await sock.sendMessage(jid, {
-                text: '🔓 *Delete Recovery: OFF*\n\nDeleted messages will NOT be recovered in this group.\n\n💡 Use `.vdton` to enable again.',
+                text: '*Delete Recovery: OFF*\n\nDeleted messages will NOT be recovered in this group.\n\nUse .vdton to enable again.',
             }, { quoted: msg });
         } else {
             // vdton - turn ON
             delete global.deleteRecoveryGroups[jid];
             await sock.sendMessage(jid, {
-                text: '🔒 *Delete Recovery: ON*\n\nDeleted messages will be forwarded to your personal chat.\n\n💡 Use `.vdtoff` to disable.',
+                text: '*Delete Recovery: ON*\n\nDeleted messages will be forwarded to your personal chat.\n\nUse .vdtoff to disable.',
             }, { quoted: msg });
         }
     },

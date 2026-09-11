@@ -23,13 +23,13 @@ export default {
         if (commandUsed === 'picoff') {
             global.photoModerationGroups[jid] = false;
             await sock.sendMessage(jid, {
-                text: '🔓 *Photo Moderation: OFF*\n\nPhotos/Images are now allowed in this group.\n\n💡 Use `.picon` to enable again.',
+                text: '*Photo Moderation: OFF*\n\nPhotos/Images are now allowed in this group.\n\nUse .picon to enable again.',
             }, { quoted: msg });
         } else {
             // picon - turn ON
             delete global.photoModerationGroups[jid];
             await sock.sendMessage(jid, {
-                text: '🔒 *Photo Moderation: ON*\n\nPhotos/Images will be automatically deleted (silently).\n\n💡 Use `.picoff` to disable.',
+                text: '*Photo Moderation: ON*\n\nPhotos/Images will be automatically deleted (silently).\n\nUse .picoff to disable.',
             }, { quoted: msg });
         }
     },

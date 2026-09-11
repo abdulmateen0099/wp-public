@@ -23,13 +23,13 @@ export default {
         if (commandUsed === 'docsoff') {
             global.documentModerationGroups[jid] = false;
             await sock.sendMessage(jid, {
-                text: '🔓 *Document Moderation: OFF*\n\nDocuments/Files are now allowed in this group.\n\n💡 Use `.docson` to enable again.',
+                text: '*Document Moderation: OFF*\n\nDocuments/Files are now allowed in this group.\n\nUse .docson to enable again.',
             }, { quoted: msg });
         } else {
             // docson - turn ON
             delete global.documentModerationGroups[jid];
             await sock.sendMessage(jid, {
-                text: '🔒 *Document Moderation: ON*\n\nDocuments/Files will be automatically deleted (silently).\n\n💡 Use `.docsoff` to disable.',
+                text: '*Document Moderation: ON*\n\nDocuments/Files will be automatically deleted (silently).\n\nUse .docsoff to disable.',
             }, { quoted: msg });
         }
     },

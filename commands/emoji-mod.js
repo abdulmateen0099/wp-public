@@ -23,13 +23,13 @@ export default {
         if (commandUsed === 'emjoff') {
             delete global.emojiModerationGroups[jid];
             await sock.sendMessage(jid, {
-                text: '🔓 *Emoji Moderation: OFF*\n\nEmojis are now allowed in messages.\n\n💡 Use `.emjon` to enable.',
+                text: '*Emoji Moderation: OFF*\n\nEmojis are now allowed in messages.\n\nUse .emjon to enable.',
             }, { quoted: msg });
         } else {
             // emjon - turn ON
             global.emojiModerationGroups[jid] = true;
             await sock.sendMessage(jid, {
-                text: '🔒 *Emoji Moderation: ON*\n\nMessages containing emojis will be automatically deleted (silently).\n\n✅ *Admin messages are ALLOWED*\n\n⚠️ *Warning:* Members cannot use emojis in text messages.\n\n💡 Use `.emjoff` to disable.',
+                text: '*Emoji Moderation: ON*\n\nMessages containing emojis will be automatically deleted (silently).\n\nAdmin messages are ALLOWED.\n\nWarning: Members cannot use emojis in text messages.\n\nUse .emjoff to disable.',
             }, { quoted: msg });
         }
     },

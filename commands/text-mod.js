@@ -23,13 +23,13 @@ export default {
         if (commandUsed === 'txtoff') {
             delete global.textModerationGroups[jid];
             await sock.sendMessage(jid, {
-                text: '🔓 *Text Message Moderation: OFF*\n\nText messages are now allowed in this group.\n\n💡 Use `.txton` to enable.',
+                text: '*Text Message Moderation: OFF*\n\nText messages are now allowed in this group.\n\nUse .txton to enable.',
             }, { quoted: msg });
         } else {
             // txton - turn ON
             global.textModerationGroups[jid] = true;
             await sock.sendMessage(jid, {
-                text: '🔒 *Text Message Moderation: ON*\n\nMembers\' text messages will be automatically deleted (silently).\n\n✅ *Admin messages are ALLOWED*\n\n⚠️ *Warning:* Only members will be restricted.\n\n💡 Use `.txtoff` to disable.',
+                text: '*Text Message Moderation: ON*\n\nMembers text messages will be automatically deleted (silently).\n\nAdmin messages are ALLOWED.\n\nWarning: Only members will be restricted.\n\nUse .txtoff to disable.',
             }, { quoted: msg });
         }
     },

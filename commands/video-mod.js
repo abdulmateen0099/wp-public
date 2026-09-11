@@ -23,13 +23,13 @@ export default {
         if (commandUsed === 'vdoff') {
             global.videoModerationGroups[jid] = false;
             await sock.sendMessage(jid, {
-                text: '🔓 *Video Moderation: OFF*\n\nVideos are now allowed in this group.\n\n💡 Use `.vdon` to enable again.',
+                text: '*Video Moderation: OFF*\n\nVideos are now allowed in this group.\n\nUse .vdon to enable again.',
             }, { quoted: msg });
         } else {
             // vdon - turn ON
             delete global.videoModerationGroups[jid];
             await sock.sendMessage(jid, {
-                text: '🔒 *Video Moderation: ON*\n\nVideos will be automatically deleted (silently).\n\n💡 Use `.vdoff` to disable.',
+                text: '*Video Moderation: ON*\n\nVideos will be automatically deleted (silently).\n\nUse .vdoff to disable.',
             }, { quoted: msg });
         }
     },

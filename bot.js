@@ -1328,12 +1328,12 @@ async function recoverGroupDeletedMessage(sock, groupJid, revokedMsgId, deleteMs
         const originalText = extractMessageText(originalMsg);
 
         // Build notification message
-        let notificationText = `🗑️ *Deleted Message Recovered*\n\n`;
-        notificationText += `📱 *Group:* ${groupName}\n`;
-        notificationText += `👤 *From:* ${senderLabel}\n`;
+        let notificationText = `*Deleted Message Recovered*\n\n`;
+        notificationText += `*Group:* ${groupName}\n`;
+        notificationText += `*From:* ${senderLabel}\n`;
         
         if (originalText) {
-            notificationText += `\n💬 *Message:*\n${originalText}`;
+            notificationText += `\n*Message:*\n${originalText}`;
         }
 
         // Send notification to owner's personal chat
@@ -1361,7 +1361,7 @@ async function recoverGroupDeletedMessage(sock, groupJid, revokedMsgId, deleteMs
                     buffer = Buffer.concat([buffer, chunk]);
                 }
 
-                const caption = `📎 *Deleted ${type.toUpperCase()} from ${groupName}*`;
+                const caption = `*Deleted ${type.toUpperCase()} from ${groupName}*`;
 
                 if (type === 'image') {
                     await sock.sendMessage(ownerJid, { image: buffer, caption });

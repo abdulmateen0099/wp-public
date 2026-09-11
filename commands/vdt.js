@@ -40,12 +40,12 @@ export default {
                 const success = await global.recoverDeletedMessage(sock, jid, quotedStanzaId, session);
                 
                 if (!success) {
-                    await sock.sendMessage(jid, { text: '❌ Could not extract contents from this message.' }, { quoted: msg });
+                    await sock.sendMessage(jid, { text: 'Could not extract contents from this message.' }, { quoted: msg });
                 }
                 return;
             } else {
                 await sock.sendMessage(jid, {
-                    text: '❌ *Message not found in cache*\n\nThe bot was offline when this message was sent, or it expired from memory.',
+                    text: '*Message not found in cache*\n\nThe bot was offline when this message was sent, or it expired from memory.',
                 }, { quoted: msg });
                 return;
             }
@@ -57,39 +57,9 @@ export default {
         
         if (isGroup) {
             const recoveryEnabled = global.deleteRecoveryGroups?.[jid] !== false;
-            statusMsg = `*🔒 Group Delete Recovery Status*
-
-Current Status: ${recoveryEnabled ? '🟢 ON (Active)' : '🔴 OFF (Disabled)'}
-
-${recoveryEnabled ? '✅ *Active Features:*\n• 🗑️ Delete for Everyone → Auto-recovered to owner\n• 📝 All message types supported\n• 📸 Photos, Videos, Documents, Voice Notes\n• 💬 Text messages with sender info' : '⚠️ *Recovery Disabled*\nDeleted messages will NOT be recovered.'}
-
-*Control Commands:*
-• \`.vdton\` - Enable delete recovery
-• \`.vdtoff\` - Disable delete recovery
-
-*Manual Recovery:*
-Reply to deleted message with \`.vdt\`
-
-*Note:* Only group admins can toggle recovery.`;
+            statusMsg = `*Group Delete Recovery Status*\n\nCurrent Status: ${recoveryEnabled ? 'ON (Active)' : 'OFF (Disabled)'}\n\n${recoveryEnabled ? '*Active Features:*\nDelete for Everyone - Auto-recovered to owner\nAll message types supported\nPhotos, Videos, Documents, Voice Notes\nText messages with sender info' : '*Recovery Disabled*\nDeleted messages will NOT be recovered.'}\n\n*Control Commands:*\n.vdton - Enable delete recovery\n.vdtoff - Disable delete recovery\n\n*Manual Recovery:*\nReply to deleted message with .vdt\n\nNote: Only group admins can toggle recovery.`;
         } else {
-            statusMsg = `*🔒 Personal Chat Recovery Status*
-
-✅ *Automatic Features (Always ON):*
-• 📸 View Once media → Auto-saved to "You"
-• 🗑️ Delete for Everyone → Auto-recovered to "You"
-• 📝 All message types supported
-• 🎯 Personal/private chats
-
-*Supported Media:*
-• Images, Videos, Audio/Voice
-• Documents, Stickers
-• Text messages
-
-*Manual Recovery:*
-Reply to any deleted message with \`.vdt\`
-
-*Group Recovery:*
-Group deleted messages are also recovered (use \`.vdton\`/\`.vdtoff\` in groups).`;
+            statusMsg = `*Personal Chat Recovery Status*\n\n*Automatic Features (Always ON):*\nView Once media - Auto-saved to "You"\nDelete for Everyone - Auto-recovered to "You"\nAll message types supported\nPersonal/private chats\n\n*Supported Media:*\nImages, Videos, Audio/Voice\nDocuments, Stickers\nText messages\n\n*Manual Recovery:*\nReply to any deleted message with .vdt\n\n*Group Recovery:*\nGroup deleted messages are also recovered (use .vdton/.vdtoff in groups).`;
         }
 
         await sock.sendMessage(jid, { text: statusMsg }, { quoted: msg });

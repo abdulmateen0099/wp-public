@@ -23,13 +23,13 @@ export default {
         if (commandUsed === 'lnkoff') {
             global.antiLinkGroups[jid] = false;
             await sock.sendMessage(jid, {
-                text: '🔓 *Anti-Link: OFF*\n\nLinks are now allowed in this group.\n\n💡 Use `.lnkon` to enable again.',
+                text: '*Anti-Link: OFF*\n\nLinks are now allowed in this group.\n\nUse .lnkon to enable again.',
             }, { quoted: msg });
         } else {
             // lnkon or lnk - turn ON
             delete global.antiLinkGroups[jid];
             await sock.sendMessage(jid, {
-                text: '🔒 *Anti-Link: ON*\n\nMessages containing links will be automatically deleted.\n\n_Admin messages are excluded._\n\n💡 Use `.lnkoff` to disable.',
+                text: '*Anti-Link: ON*\n\nMessages containing links will be automatically deleted.\n\nAdmin messages are excluded.\n\nUse .lnkoff to disable.',
             }, { quoted: msg });
         }
     },

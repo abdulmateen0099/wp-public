@@ -23,13 +23,13 @@ export default {
         if (commandUsed === 'stroff') {
             global.stickerModerationGroups[jid] = false;
             await sock.sendMessage(jid, {
-                text: '🔓 *Sticker Moderation: OFF*\n\nStickers are now allowed in this group.\n\n💡 Use `.stron` to enable again.',
+                text: '*Sticker Moderation: OFF*\n\nStickers are now allowed in this group.\n\nUse .stron to enable again.',
             }, { quoted: msg });
         } else {
             // stron - turn ON
             delete global.stickerModerationGroups[jid];
             await sock.sendMessage(jid, {
-                text: '🔒 *Sticker Moderation: ON*\n\nStickers will be automatically deleted (silently).\n\n💡 Use `.stroff` to disable.',
+                text: '*Sticker Moderation: ON*\n\nStickers will be automatically deleted (silently).\n\nUse .stroff to disable.',
             }, { quoted: msg });
         }
     },

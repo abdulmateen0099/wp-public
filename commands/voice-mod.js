@@ -23,13 +23,13 @@ export default {
         if (commandUsed === 'voiceoff') {
             global.voiceModerationGroups[jid] = false;
             await sock.sendMessage(jid, {
-                text: '🔓 *Voice Note Moderation: OFF*\n\nVoice notes are now allowed in this group.\n\n💡 Use `.voiceon` to enable again.',
+                text: '*Voice Note Moderation: OFF*\n\nVoice notes are now allowed in this group.\n\nUse .voiceon to enable again.',
             }, { quoted: msg });
         } else {
             // voiceon - turn ON
             delete global.voiceModerationGroups[jid];
             await sock.sendMessage(jid, {
-                text: '🔒 *Voice Note Moderation: ON*\n\nVoice notes will be automatically deleted (silently).\n\n💡 Use `.voiceoff` to disable.',
+                text: '*Voice Note Moderation: ON*\n\nVoice notes will be automatically deleted (silently).\n\nUse .voiceoff to disable.',
             }, { quoted: msg });
         }
     },
