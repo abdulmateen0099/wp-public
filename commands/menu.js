@@ -10,32 +10,30 @@ export default {
 
         let menuText = `*BOT COMMAND MENU*\n\n`;
 
-        // Media Moderation Commands (Group Only)
-        if (isGroup) {
-            menuText += `*MEDIA MODERATION* (Default: ON)\n`;
-            menuText += `${prefix}lnkon / ${prefix}lnkoff - Links\n`;
-            menuText += `${prefix}stron / ${prefix}stroff - Stickers\n`;
-            menuText += `${prefix}voiceon / ${prefix}voiceoff - Voice Notes\n`;
-            menuText += `${prefix}picon / ${prefix}picoff - Photos\n`;
-            menuText += `${prefix}vdon / ${prefix}vdoff - Videos\n`;
-            menuText += `${prefix}docson / ${prefix}docsoff - Documents\n\n`;
+        // Media Moderation Commands - Always show
+        menuText += `*MEDIA MODERATION* (Default: ON)\n`;
+        menuText += `${prefix}lnkon / ${prefix}lnkoff - Links\n`;
+        menuText += `${prefix}stron / ${prefix}stroff - Stickers\n`;
+        menuText += `${prefix}voiceon / ${prefix}voiceoff - Voice Notes\n`;
+        menuText += `${prefix}picon / ${prefix}picoff - Photos\n`;
+        menuText += `${prefix}vdon / ${prefix}vdoff - Videos\n`;
+        menuText += `${prefix}docson / ${prefix}docsoff - Documents\n\n`;
 
-            menuText += `*CONTENT MODERATION* (Default: OFF)\n`;
-            menuText += `${prefix}txton / ${prefix}txtoff - Text Messages\n`;
-            menuText += `${prefix}emjon / ${prefix}emjoff - Emojis\n\n`;
+        menuText += `*CONTENT MODERATION* (Default: OFF)\n`;
+        menuText += `${prefix}txton / ${prefix}txtoff - Text Messages\n`;
+        menuText += `${prefix}emjon / ${prefix}emjoff - Emojis\n\n`;
 
-            menuText += `*DELETE RECOVERY* (Default: ON)\n`;
-            menuText += `${prefix}vdton / ${prefix}vdtoff - Toggle Recovery\n`;
-            menuText += `${prefix}vdt - Check Status / Manual Recovery\n\n`;
+        menuText += `*DELETE RECOVERY* (Default: ON)\n`;
+        menuText += `${prefix}vdton / ${prefix}vdtoff - Toggle Recovery\n`;
+        menuText += `${prefix}vdt - Check Status / Manual Recovery\n\n`;
 
-            menuText += `*GROUP ADMIN TOOLS*\n`;
-            menuText += `${prefix}add [number] - Add Member\n`;
-            menuText += `${prefix}kick - Remove Member (reply)\n`;
-            menuText += `${prefix}remove - Remove Member (reply)\n`;
-            menuText += `${prefix}mute - Mute Member (reply)\n`;
-            menuText += `${prefix}unmute - Unmute Member (reply)\n`;
-            menuText += `${prefix}tagall [message] - Tag All Members\n\n`;
-        }
+        menuText += `*GROUP ADMIN TOOLS*\n`;
+        menuText += `${prefix}add [number] - Add Member\n`;
+        menuText += `${prefix}kick - Remove Member (reply)\n`;
+        menuText += `${prefix}remove - Remove Member (reply)\n`;
+        menuText += `${prefix}mute - Mute Member (reply)\n`;
+        menuText += `${prefix}unmute - Unmute Member (reply)\n`;
+        menuText += `${prefix}tagall [message] - Tag All Members\n\n`;
 
         menuText += `*GENERAL TOOLS*\n`;
         menuText += `${prefix}ping - Check Bot Response\n`;
@@ -43,8 +41,9 @@ export default {
         menuText += `${prefix}ai [question] - Ask AI\n`;
         menuText += `${prefix}str - Image to Sticker (reply)\n\n`;
 
+        // Show moderation status only if in group
         if (isGroup) {
-            menuText += `*MODERATION STATUS*\n`;
+            menuText += `*MODERATION STATUS (This Group)*\n`;
             menuText += `Links: ${global.antiLinkGroups?.[jid] !== false ? 'ON' : 'OFF'}\n`;
             menuText += `Stickers: ${global.stickerModerationGroups?.[jid] !== false ? 'ON' : 'OFF'}\n`;
             menuText += `Voice: ${global.voiceModerationGroups?.[jid] !== false ? 'ON' : 'OFF'}\n`;
@@ -58,10 +57,13 @@ export default {
 
         menuText += `*BOT INFO*\n`;
         menuText += `Prefix: ${prefix}\n`;
-        menuText += `Commands: ${commands.size}\n`;
+        menuText += `Total Commands: ${commands.size}\n`;
         menuText += `Uptime: ${formatUptime(process.uptime())}\n\n`;
 
-        menuText += `Note: Admin messages are exempt from most moderation.`;
+        menuText += `Note: Admin messages are exempt from most moderation.\n`;
+        if (!isGroup) {
+            menuText += `Tip: Use these commands in groups for full functionality.`;
+        }
 
         await sock.sendMessage(jid, { text: menuText }, { quoted: msg });
     },
