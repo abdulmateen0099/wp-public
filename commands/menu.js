@@ -21,7 +21,8 @@ export default {
 
         menuText += `*CONTENT MODERATION* (Default: OFF)\n`;
         menuText += `${prefix}txton / ${prefix}txtoff - Text Messages\n`;
-        menuText += `${prefix}emjon / ${prefix}emjoff - Emojis\n\n`;
+        menuText += `${prefix}emjon / ${prefix}emjoff - Emojis\n`;
+        menuText += `${prefix}onceon / ${prefix}onceoff - View Once Media\n\n`;
 
         menuText += `*DELETE RECOVERY* (Default: ON)\n`;
         menuText += `${prefix}vdton / ${prefix}vdtoff - Toggle Recovery\n`;
@@ -52,6 +53,7 @@ export default {
             menuText += `Documents: ${global.documentModerationGroups?.[jid] !== false ? 'ON' : 'OFF'}\n`;
             menuText += `Text: ${global.textModerationGroups?.[jid] === true ? 'ON' : 'OFF'}\n`;
             menuText += `Emojis: ${global.emojiModerationGroups?.[jid] === true ? 'ON' : 'OFF'}\n`;
+            menuText += `View Once: ${global.viewOnceModerationGroups?.[jid] === true ? 'ON' : 'OFF'}\n`;
             menuText += `Recovery: ${global.deleteRecoveryGroups?.[jid] !== false ? 'ON' : 'OFF'}\n\n`;
         }
 
