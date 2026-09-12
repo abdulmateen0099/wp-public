@@ -17,12 +17,12 @@ export default {
         menuText += `${prefix}voiceon / ${prefix}voiceoff - Voice Notes\n`;
         menuText += `${prefix}picon / ${prefix}picoff - Photos\n`;
         menuText += `${prefix}vdon / ${prefix}vdoff - Videos\n`;
-        menuText += `${prefix}docson / ${prefix}docsoff - Documents\n\n`;
+        menuText += `${prefix}docson / ${prefix}docsoff - Documents\n`;
+        menuText += `${prefix}onceon / ${prefix}onceoff - View Once Media\n\n`;
 
         menuText += `*CONTENT MODERATION* (Default: OFF)\n`;
         menuText += `${prefix}txton / ${prefix}txtoff - Text Messages\n`;
-        menuText += `${prefix}emjon / ${prefix}emjoff - Emojis\n`;
-        menuText += `${prefix}onceon / ${prefix}onceoff - View Once Media\n\n`;
+        menuText += `${prefix}emjon / ${prefix}emjoff - Emojis\n\n`;
 
         menuText += `*DELETE RECOVERY* (Default: ON)\n`;
         menuText += `${prefix}vdton / ${prefix}vdtoff - Toggle Recovery\n`;
@@ -51,9 +51,9 @@ export default {
             menuText += `Photos: ${global.photoModerationGroups?.[jid] !== false ? 'ON' : 'OFF'}\n`;
             menuText += `Videos: ${global.videoModerationGroups?.[jid] !== false ? 'ON' : 'OFF'}\n`;
             menuText += `Documents: ${global.documentModerationGroups?.[jid] !== false ? 'ON' : 'OFF'}\n`;
+            menuText += `View Once: ${global.viewOnceModerationGroups?.[jid] !== false ? 'ON' : 'OFF'}\n`;
             menuText += `Text: ${global.textModerationGroups?.[jid] === true ? 'ON' : 'OFF'}\n`;
             menuText += `Emojis: ${global.emojiModerationGroups?.[jid] === true ? 'ON' : 'OFF'}\n`;
-            menuText += `View Once: ${global.viewOnceModerationGroups?.[jid] === true ? 'ON' : 'OFF'}\n`;
             menuText += `Recovery: ${global.deleteRecoveryGroups?.[jid] !== false ? 'ON' : 'OFF'}\n\n`;
         }
 

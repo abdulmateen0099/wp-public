@@ -7,22 +7,22 @@ export async function moderateGroupViewOnce(sock, msg) {
     // Check if it's a group
     if (!jid?.endsWith('@g.us')) return false;
     
+    // Check if View Once moderation is disabled for this group (ON by default)
+    if (global.viewOnceModerationGroups && global.viewOnceModerationGroups[jid] === false) {
+        return false; // Moderation is OFF, allow View Once
+    }
+    
     // Check if it's a View Once message
     const isViewOnce = msg.key.isViewOnce || false;
     const messageContent = normalizeMessageContent(msg.message);
     
-    // Check for View Once wrappers
+    // Check for View Once wrappers and any media inside them
     const hasViewOnce = messageContent?.viewOnceMessage || 
                        messageContent?.viewOnceMessageV2 || 
                        messageContent?.viewOnceMessageV2Extension ||
                        isViewOnce;
     
     if (!hasViewOnce) return false;
-    
-    // Check if View Once moderation is disabled for this group
-    if (global.viewOnceModerationGroups && global.viewOnceModerationGroups[jid] === false) {
-        return false; // Moderation is OFF, allow View Once
-    }
     
     const event = `[viewonce-moderation] chat=${jid} message=${msg.key.id}`;
     console.log(`${event} detected View Once message`);
@@ -54,6 +54,7 @@ export async function moderateGroupViewOnce(sock, msg) {
         }
         
         // Delete the View Once message (only non-admin members)
+        // This will delete ANY View Once content (photo, video, voice, etc.)
         await sock.sendMessage(jid, { delete: msg.key });
         console.log(`${event} View Once message deleted silently`);
     } catch (err) {

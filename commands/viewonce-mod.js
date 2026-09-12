@@ -3,7 +3,7 @@ import { requireGroupAdmin } from '../utils/groupAdmin.js';
 export default {
     name: 'onceon',
     aliases: ['onceoff'],
-    description: 'Toggle View Once moderation in groups (OFF by default)',
+    description: 'Toggle View Once moderation in groups (ON by default)',
     usage: '.onceon / .onceoff',
     category: 'Group Admin',
 
@@ -21,15 +21,15 @@ export default {
         const commandUsed = fullText.trim().split(/\s+/)[0].toLowerCase().replace(context?.prefix || '.', '');
 
         if (commandUsed === 'onceoff') {
-            delete global.viewOnceModerationGroups[jid];
+            global.viewOnceModerationGroups[jid] = false;
             await sock.sendMessage(jid, {
-                text: '*View Once Moderation: OFF*\n\nView Once messages are now allowed in this group.\n\nUse .onceon to enable.',
+                text: '*View Once Moderation: OFF*\n\nView Once messages are now allowed in this group.\n\nUse .onceon to enable again.',
             }, { quoted: msg });
         } else {
-            // onceon - turn ON
-            global.viewOnceModerationGroups[jid] = true;
+            // onceon - turn ON (or confirm it's ON)
+            delete global.viewOnceModerationGroups[jid];
             await sock.sendMessage(jid, {
-                text: '*View Once Moderation: ON*\n\nView Once messages will be automatically deleted (silently).\n\nAdmin messages are ALLOWED.\n\nWarning: Members cannot send View Once media.\n\nUse .onceoff to disable.',
+                text: '*View Once Moderation: ON*\n\nView Once messages will be automatically deleted (silently).\n\nAll View Once media types are blocked (photos, videos, voice notes, etc).\n\nAdmin messages are ALLOWED.\n\nUse .onceoff to disable.',
             }, { quoted: msg });
         }
     },
