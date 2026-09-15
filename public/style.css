@@ -1039,8 +1039,8 @@ button {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  max-height: 500px;
-  overflow: hidden;
+  max-height: 2000px; /* Increased to show all commands */
+  overflow: visible;
   opacity: 1;
   transition: max-height 0.4s ease, opacity 0.3s ease;
 }
@@ -1472,6 +1472,36 @@ button {
   .stats-grid { grid-template-columns: 1fr; gap: 10px; }
   .account-actions-card { flex-direction: column; align-items: stretch; gap: 12px; }
   .account-actions-card .btn { width: 100%; }
+
+  /* Software Commands - Mobile Responsive */
+  .quick-commands-card { padding: 14px 16px; }
+  .commands-header { margin-bottom: 10px; }
+  .quick-commands-card h3 { font-size: 12px; }
+  
+  .commands-chips {
+    max-height: none !important; /* Remove height limit on mobile when expanded */
+    gap: 6px;
+  }
+  
+  .commands-chips.collapsed {
+    max-height: 0 !important;
+  }
+  
+  .chip {
+    padding: 5px 10px;
+    font-size: 11px;
+    gap: 4px;
+    width: 100%; /* Make chips full width on mobile */
+    justify-content: flex-start;
+    white-space: normal; /* Allow text to wrap */
+    min-height: 32px;
+  }
+  
+  .chip code {
+    font-size: 11px;
+    white-space: nowrap; /* Keep command code on one line */
+    flex-shrink: 0;
+  }
 
   /* Terminal */
   .terminal-header { padding: 9px 11px; gap: 6px; flex-wrap: nowrap; }
