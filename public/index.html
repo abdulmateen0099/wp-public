@@ -330,16 +330,48 @@
         </div>
 
         <div class="quick-commands-card">
-          <h3>Popular Commands</h3>
-          <div class="commands-chips">
-            <span class="chip" onclick="window.insertTerminalCmd('.menu')" title="Click to view command help in terminal"><code>.menu</code> All commands</span>
-            <span class="chip" onclick="window.insertTerminalCmd('.ping')" title="Click to view command help in terminal"><code>.ping</code> Check speed</span>
-            <span class="chip" onclick="window.insertTerminalCmd('.op')" title="Click to view command help in terminal"><code>.op</code> Save View-Once</span>
-            <span class="chip" onclick="window.insertTerminalCmd('.str')" title="Click to view command help in terminal"><code>.str</code> Make Sticker</span>
-            <span class="chip" onclick="window.insertTerminalCmd('.vdt')" title="Click to view command help in terminal"><code>.vdt</code> Anti-delete</span>
-            <span class="chip" onclick="window.insertTerminalCmd('.add')" title="Click to view command help in terminal"><code>.add</code> Add member</span>
-            <span class="chip" onclick="window.insertTerminalCmd('.unmute')" title="Click to view command help in terminal"><code>.unmute</code> Unmute group</span>
-            <span class="chip" onclick="window.insertTerminalCmd('.lnk')" title="Click to view command help in terminal"><code>.lnk</code> Anti-link</span>
+          <div class="commands-header" onclick="toggleCommandsList()">
+            <h3>Software Commands</h3>
+            <button class="commands-toggle-btn" id="commandsToggleBtn" type="button" aria-label="Toggle commands list">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+          </div>
+          <div class="commands-chips collapsed" id="commandsList">
+            <!-- General Commands -->
+            <span class="chip" onclick="window.insertTerminalCmd('.menu')" title="Display all available bot commands"><code>.menu</code> Show all commands</span>
+            <span class="chip" onclick="window.insertTerminalCmd('.ping')" title="Check bot response time and performance"><code>.ping</code> Check response speed</span>
+            
+            <!-- Media Commands -->
+            <span class="chip" onclick="window.insertTerminalCmd('.op')" title="Save and view view-once media"><code>.op</code> Save view-once media</span>
+            <span class="chip" onclick="window.insertTerminalCmd('.str')" title="Convert images to WhatsApp stickers"><code>.str</code> Create sticker from image</span>
+            
+            <!-- Message Management -->
+            <span class="chip" onclick="window.insertTerminalCmd('.vdt')" title="Enable anti-delete to save deleted messages"><code>.vdt</code> Toggle anti-delete messages</span>
+            <span class="chip" onclick="window.insertTerminalCmd('.vdt-toggle')" title="Toggle view deleted messages feature"><code>.vdt-toggle</code> Switch deleted message view</span>
+            
+            <!-- Group Management -->
+            <span class="chip" onclick="window.insertTerminalCmd('.add')" title="Add new members to the group"><code>.add</code> Add member to group</span>
+            <span class="chip" onclick="window.insertTerminalCmd('.remove')" title="Remove members from the group"><code>.remove</code> Remove member from group</span>
+            <span class="chip" onclick="window.insertTerminalCmd('.kick')" title="Kick members from the group"><code>.kick</code> Kick member from group</span>
+            <span class="chip" onclick="window.insertTerminalCmd('.mute')" title="Mute group notifications"><code>.mute</code> Mute group</span>
+            <span class="chip" onclick="window.insertTerminalCmd('.unmute')" title="Unmute group notifications"><code>.unmute</code> Unmute group</span>
+            <span class="chip" onclick="window.insertTerminalCmd('.tagall')" title="Mention all group members"><code>.tagall</code> Tag all members</span>
+            <span class="chip" onclick="window.insertTerminalCmd('.lnk')" title="Enable anti-link protection"><code>.lnk</code> Block group links</span>
+            
+            <!-- Moderation Commands -->
+            <span class="chip" onclick="window.insertTerminalCmd('.text-mod')" title="Moderate text messages in group"><code>.text-mod</code> Moderate text content</span>
+            <span class="chip" onclick="window.insertTerminalCmd('.photo-mod')" title="Moderate photo messages in group"><code>.photo-mod</code> Moderate photos</span>
+            <span class="chip" onclick="window.insertTerminalCmd('.video-mod')" title="Moderate video messages in group"><code>.video-mod</code> Moderate videos</span>
+            <span class="chip" onclick="window.insertTerminalCmd('.voice-mod')" title="Moderate voice messages in group"><code>.voice-mod</code> Moderate voice messages</span>
+            <span class="chip" onclick="window.insertTerminalCmd('.sticker-mod')" title="Moderate sticker messages in group"><code>.sticker-mod</code> Moderate stickers</span>
+            <span class="chip" onclick="window.insertTerminalCmd('.emoji-mod')" title="Moderate emoji messages in group"><code>.emoji-mod</code> Moderate emojis</span>
+            <span class="chip" onclick="window.insertTerminalCmd('.docs-mod')" title="Moderate document messages in group"><code>.docs-mod</code> Moderate documents</span>
+            <span class="chip" onclick="window.insertTerminalCmd('.viewonce-mod')" title="Moderate view-once messages in group"><code>.viewonce-mod</code> Moderate view-once media</span>
+            
+            <!-- AI Commands -->
+            <span class="chip" onclick="window.insertTerminalCmd('.ai')" title="Interact with AI assistant"><code>.ai</code> Ask AI assistant</span>
           </div>
         </div>
 

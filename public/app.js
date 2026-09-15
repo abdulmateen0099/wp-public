@@ -903,3 +903,14 @@ async function fetchLiveLogs(forceRerender = false) {
 setInterval(() => {
   if (isAuthenticated) fetchLiveLogs(false);
 }, 2500);
+
+// ─── Software Commands Toggle ──────────────────────────────
+window.toggleCommandsList = function() {
+  const commandsList = document.getElementById('commandsList');
+  const toggleBtn = document.getElementById('commandsToggleBtn');
+  
+  if (commandsList && toggleBtn) {
+    commandsList.classList.toggle('collapsed');
+    toggleBtn.classList.toggle('rotated');
+  }
+};

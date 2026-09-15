@@ -990,6 +990,16 @@ button {
   border-radius: var(--r-md);
   padding: 18px 20px;
 }
+
+.commands-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  margin-bottom: 12px;
+}
+
 .quick-commands-card h3 {
   font-family: var(--f-display);
   font-size: 14px;
@@ -997,13 +1007,49 @@ button {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--mute);
-  margin-bottom: 12px;
+  margin: 0;
+}
+
+.commands-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-soft);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-sm);
+  padding: 4px;
+  cursor: pointer;
+  transition: transform 0.3s ease, background 0.2s;
+  color: var(--mute);
+  width: 24px;
+  height: 24px;
+}
+
+.commands-toggle-btn:hover {
+  background: var(--primary);
+  border-color: var(--primary-pressed);
+  color: var(--on-primary);
+}
+
+.commands-toggle-btn.rotated {
+  transform: rotate(180deg);
 }
 
 .commands-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  max-height: 500px;
+  overflow: hidden;
+  opacity: 1;
+  transition: max-height 0.4s ease, opacity 0.3s ease;
+}
+
+.commands-chips.collapsed {
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
+  overflow: hidden;
 }
 
 .chip {
