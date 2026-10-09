@@ -18,7 +18,7 @@ import vdt from '../commands/vdt.js';
 const source = fs.readFileSync(new URL('../bot.js', import.meta.url), 'utf8');
 function section(start, end) { return source.slice(source.indexOf(start), source.indexOf(end)); }
 function harness() {
-    const sockets = [], timers = [], sent = [];
+    const sockets = [], timers = [], sent = [], encryption = [];
     const commands = new Map([['ping', ping], ['op', op]]);
     const context = vm.createContext({
         ...routing, MessageStore, withSignalRecovery, DEFAULT_CONNECTION_CONFIG, PersonalRecovery, isPersonalChat, WAMessageStubType, cleanOutgoingContent, userLabel, moderateGroupSticker, path, proto, DisconnectReason, commands,
@@ -41,6 +41,11 @@ function harness() {
                     sent.push(args);
                     return { key: { id: `sent-${sent.length}`, remoteJid: args[0], fromMe: true }, message: { conversation: args[1].text } };
                 },
+                getUSyncDevices: async (...args) => {
+                    encryption.push(['devices', ...args]);
+                    return [{ user: '12345', device: 2 }];
+                },
+                assertSessions: async (...args) => { encryption.push(['sessions', ...args]); },
             };
             sockets.push(sock);
             return sock;
@@ -52,11 +57,49 @@ function harness() {
         section('async function handleMessageUpdate', '// Ensure this is global') +
         section('function extractMessageText', '// ─── Initialize All Sessions') +
         '\nthis.Session = WhatsAppSession;', context);
-    return { context, sockets, timers, sent, commands };
+    return { context, sockets, timers, sent, commands, encryption };
 }
 const message = (id, text = '.ping', extra = {}) => ({
     key: { id, remoteJid: '98765@s.whatsapp.net', fromMe: true, ...extra },
     message: { conversation: text }, messageTimestamp: Math.floor(Date.now() / 1000),
+});
+
+test('self-chat replies refresh phone and linked-device keys once per socket before sending', async () => {
+    const h = harness(), session = new h.context.Session('primary');
+    const sock = await h.context.startSession(session);
+    await Promise.all([
+        sock.sendMessage('12345@s.whatsapp.net', { text: 'menu' }),
+        sock.sendMessage('12345@s.whatsapp.net', { text: 'ping' }),
+    ]);
+    assert.equal(h.encryption.length, 2);
+    assert.equal(h.encryption[0][0], 'devices');
+    assert.equal(h.encryption[0][2], false);
+    assert.equal(h.encryption[0][3], true);
+    assert.deepEqual(Array.from(h.encryption[1][1]), ['12345@s.whatsapp.net', '12345:2@s.whatsapp.net']);
+    assert.equal(h.encryption[1][2], true);
+    const next = await h.context.startSession(session);
+    await next.sendMessage('12345@s.whatsapp.net', { text: 'after reconnect' });
+    assert.equal(h.encryption.length, 4);
+});
+
+test('failed key refresh blocks unreadable replies and allows the next send to retry', async () => {
+    const h = harness(), session = new h.context.Session('primary');
+    const sock = await h.context.startSession(session);
+    const refresh = sock.assertSessions;
+    sock.assertSessions = async () => { throw new Error('Key query timed out'); };
+    await assert.rejects(sock.sendMessage('12345@s.whatsapp.net', { text: 'menu' }), /Key query timed out/);
+    assert.equal(h.sent.length, 0);
+    sock.assertSessions = refresh;
+    await sock.sendMessage('12345@s.whatsapp.net', { text: 'menu' });
+    assert.equal(h.sent.length, 1);
+});
+
+test('group tagall and message deletion do not refresh self-chat encryption', async () => {
+    const h = harness(), session = new h.context.Session('primary');
+    const sock = await h.context.startSession(session);
+    await sock.sendMessage('group@g.us', { text: 'group mention' }, { groupTagAll: true });
+    await sock.sendMessage('group@g.us', { delete: { id: 'delete-me' } });
+    assert.equal(h.encryption.length, 0);
 });
 
 test('every socket installs sender-session recovery using its own auth key store', async () => {

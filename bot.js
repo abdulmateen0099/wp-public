@@ -772,6 +772,28 @@ async function startSession(session, options = {}) {
     // Keep sent payloads available when a recipient asks us to re-encrypt them.
     // This cache belongs to the account and survives socket reconnects.
     const sendMessage = sock.sendMessage.bind(sock);
+    let selfChatReady = null;
+    const prepareSelfChat = ownerJid => {
+        if (!selfChatReady) {
+            selfChatReady = (async () => {
+                // Restored sessions can decrypt incoming commands while the phone
+                // cannot decrypt our outgoing ratchet. Establish fresh sessions once
+                // per socket, including device 0 (the primary phone).
+                const devices = await sock.getUSyncDevices([ownerJid], false, true);
+                const ownUser = ownerJid.split('@')[0];
+                const jids = new Set([ownerJid]);
+                for (const { user, device } of devices) {
+                    if (user === ownUser) jids.add(`${user}${device ? `:${device}` : ''}@s.whatsapp.net`);
+                }
+                await sock.assertSessions([...jids], true);
+                console.log(`[${session.id}] Self-chat encryption refreshed for ${jids.size} device(s)`);
+            })().catch(error => {
+                selfChatReady = null;
+                throw error;
+            });
+        }
+        return selfChatReady;
+    };
     sock.sendMessage = async (...args) => {
         // Central privacy boundary covers commands and background group events.
         // Only successful tagall output may bypass private routing.
@@ -789,6 +811,8 @@ async function startSession(session, options = {}) {
             args[0] = privateJid;
             args[2] = { ...args[2] };
             delete args[2].quoted;
+            // Reactions are best effort and do not trigger an encryption refresh.
+            if (!args[1]?.react) await prepareSelfChat(privateJid);
         }
         args[1] = cleanOutgoingContent(args[1]);
         const sent = await sendMessage(...args);

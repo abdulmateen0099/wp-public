@@ -513,6 +513,21 @@ leave ratchets stale; the error alone does not establish which caused the drift.
 If fresh messages still fail after updating and restarting the bot, stop duplicate
 instances first, then unlink and re-pair the affected account through the dashboard.
 
+### Phone shows `Waiting for this message` for bot replies
+
+If the logs show `Command: .menu` but the reply is unreadable on the phone,
+incoming command decryption succeeded and outgoing delivery needs attention.
+Before the first private reply on each connection, the bot refreshes the account's
+device list and establishes fresh outgoing sessions for its primary phone and
+linked devices. Look for `Self-chat encryption refreshed` in the logs. A failed
+key query blocks the send and is retried on the next command.
+
+After deploying this fix, restart the bot and send a new `.ping` from the linked
+account with WhatsApp open on the phone. Old placeholders are not automatically
+replaced by this refresh. If new replies remain unreadable, unlink the bot under
+WhatsApp **Linked devices**, then re-pair it through the dashboard. Confirm that
+only one bot uses that account's saved auth directory.
+
 ### Q1: Pairing Code says "Timeout" or does not show on screen
 - Make sure you entered the phone number with the full country code and without leading zeroes or `+` (e.g. `923320000000`, NOT `03320000000`).
 - WhatsApp's servers occasionally throttle pairing code requests. If it fails, click **"Scan with QR Code"** as an instant alternative.
