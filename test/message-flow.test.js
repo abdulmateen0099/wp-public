@@ -7,9 +7,15 @@ import { DEFAULT_CONNECTION_CONFIG, DisconnectReason, proto, WAMessageStubType }
 import { PersonalRecovery, isPersonalChat } from '../utils/personalRecovery.js';
 import * as routing from '../utils/messageRouting.js';
 import MessageStore from '../utils/messageStore.js';
-import { withSignalRecovery } from '../utils/signalRecovery.js';
 import { cleanOutgoingContent, userLabel } from '../utils/displayText.js';
 import { moderateGroupSticker } from '../utils/stickerModeration.js';
+import { moderateGroupVoice } from '../utils/voiceModeration.js';
+import { moderateGroupPhoto } from '../utils/photoModeration.js';
+import { moderateGroupVideo } from '../utils/videoModeration.js';
+import { moderateGroupDocument } from '../utils/documentModeration.js';
+import { moderateGroupText } from '../utils/textModeration.js';
+import { moderateGroupEmoji } from '../utils/emojiModeration.js';
+import { moderateGroupViewOnce } from '../utils/viewOnceModeration.js';
 import ping from '../commands/ping.js';
 import op from '../commands/op.js';
 import menu from '../commands/menu.js';
@@ -21,7 +27,8 @@ function harness() {
     const sockets = [], timers = [], sent = [], encryption = [];
     const commands = new Map([['ping', ping], ['op', op]]);
     const context = vm.createContext({
-        ...routing, MessageStore, withSignalRecovery, DEFAULT_CONNECTION_CONFIG, PersonalRecovery, isPersonalChat, WAMessageStubType, cleanOutgoingContent, userLabel, moderateGroupSticker, path, proto, DisconnectReason, commands,
+        ...routing, MessageStore, DEFAULT_CONNECTION_CONFIG, PersonalRecovery, isPersonalChat, WAMessageStubType, cleanOutgoingContent, userLabel, moderateGroupSticker, path, proto, DisconnectReason, commands,
+        moderateGroupVoice, moderateGroupPhoto, moderateGroupVideo, moderateGroupDocument, moderateGroupText, moderateGroupEmoji, moderateGroupViewOnce,
         sessionsBaseDir: '/fake', __dirname: '/fake', PREFIX: '.', OWNER_NUMBER: '12345',
         process: { env: {} }, console: { log() {}, warn() {}, error() {} },
         fs: { existsSync: () => true, readdirSync: () => [], rmSync() {} },
@@ -64,58 +71,13 @@ const message = (id, text = '.ping', extra = {}) => ({
     message: { conversation: text }, messageTimestamp: Math.floor(Date.now() / 1000),
 });
 
-test('self-chat replies refresh phone and linked-device keys once per socket before sending', async () => {
+test('sockets use upstream Signal handling without forcibly resetting sessions', async () => {
     const h = harness(), session = new h.context.Session('primary');
     const sock = await h.context.startSession(session);
-    await Promise.all([
-        sock.sendMessage('12345@s.whatsapp.net', { text: 'menu' }),
-        sock.sendMessage('12345@s.whatsapp.net', { text: 'ping' }),
-    ]);
-    assert.equal(h.encryption.length, 2);
-    assert.equal(h.encryption[0][0], 'devices');
-    assert.equal(h.encryption[0][2], false);
-    assert.equal(h.encryption[0][3], true);
-    assert.deepEqual(Array.from(h.encryption[1][1]), ['12345@s.whatsapp.net', '12345:2@s.whatsapp.net']);
-    assert.equal(h.encryption[1][2], true);
-    const next = await h.context.startSession(session);
-    await next.sendMessage('12345@s.whatsapp.net', { text: 'after reconnect' });
-    assert.equal(h.encryption.length, 4);
-});
-
-test('failed key refresh blocks unreadable replies and allows the next send to retry', async () => {
-    const h = harness(), session = new h.context.Session('primary');
-    const sock = await h.context.startSession(session);
-    const refresh = sock.assertSessions;
-    sock.assertSessions = async () => { throw new Error('Key query timed out'); };
-    await assert.rejects(sock.sendMessage('12345@s.whatsapp.net', { text: 'menu' }), /Key query timed out/);
-    assert.equal(h.sent.length, 0);
-    sock.assertSessions = refresh;
-    await sock.sendMessage('12345@s.whatsapp.net', { text: 'menu' });
-    assert.equal(h.sent.length, 1);
-});
-
-test('group tagall and message deletion do not refresh self-chat encryption', async () => {
-    const h = harness(), session = new h.context.Session('primary');
-    const sock = await h.context.startSession(session);
-    await sock.sendMessage('group@g.us', { text: 'group mention' }, { groupTagAll: true });
-    await sock.sendMessage('group@g.us', { delete: { id: 'delete-me' } });
+    assert.equal(sock.config.makeSignalRepository, undefined);
+    for (let i = 0; i < 20; i++) await sock.sendMessage('12345@s.whatsapp.net', { text: 'reply ' + i });
+    assert.equal(h.sent.length, 20);
     assert.equal(h.encryption.length, 0);
-});
-
-test('every socket installs sender-session recovery using its own auth key store', async () => {
-    const h = harness(), session = new h.context.Session('primary');
-    const sock = await h.context.startSession(session);
-    const writes = [];
-    const repository = sock.config.makeSignalRepository({
-        creds: {}, keys: {
-            get: async () => ({}),
-            set: async data => writes.push(data),
-        },
-    });
-    assert.equal(typeof repository.decryptMessage, 'function');
-    // A missing session is handled by Baileys retries, never reset unrelated keys.
-    await assert.rejects(repository.decryptMessage({ jid: '123:7@s.whatsapp.net', type: 'msg', ciphertext: Buffer.alloc(0) }));
-    assert.equal(writes.length, 0);
 });
 
 test('notify and fresh append execute once per session; old history does not execute', async () => {
@@ -235,7 +197,7 @@ test('menu, renamed anti-delete command, and unknown command reply in self-chat'
     const sock = await h.context.startSession(session);
     const receive = sock.handlers.get('messages.upsert');
     await receive({ type: 'notify', messages: [message('menu', '.menu', { remoteJid: '12345@s.whatsapp.net' })] });
-    assert.match(h.sent[0][1].text, /Command Menu/);
+    assert.match(h.sent[0][1].text, /BOT COMMAND MENU/);
     assert.match(h.sent[0][1].text, /vdt/);
     assert.equal(h.sent[0][2].quoted, undefined);
     // Use a stub to verify dispatch without sharing globals between VM and test modules.
@@ -279,9 +241,8 @@ test('sticker moderation runs for non-owners, only once, and is excluded from an
     const receive = sock.handlers.get('messages.upsert');
     await receive({ type: 'notify', messages: [sticker] });
     await receive({ type: 'notify', messages: [sticker] });
-    assert.equal(h.sent.length, 2);
+    assert.equal(h.sent.length, 1);
     assert.equal(h.sent[0][0], 'group@g.us');
-    assert.equal(h.sent[1][0], '12345@s.whatsapp.net');
     assert.equal(h.context.global.messageCache.get('group@g.us_ban-sticker'), null);
 });
 

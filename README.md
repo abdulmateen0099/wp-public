@@ -492,41 +492,31 @@ Your dashboard is now live and secure at:
 
 ## Troubleshooting & FAQs
 
-### Repeated `Over 2000 messages into the future` / unreadable messages
+### Replies show "Waiting for this message"
 
-This means the saved Signal receiver session is too far behind the sender's
-message counter. The connection can still show ONLINE while commands arrive as
-ciphertext stubs and cannot execute. libsignal reports this to Baileys as
-`No matching sessions found for message`.
+The bot now pins Baileys 7.0.0-rc14, which provides isolated Signal transactions
+and current phone-number/LID session routing. A regression test reproduced lost
+ratchet writes in legacy 6.7.24 when a second transaction overlapped a slow disk
+commit. The same test passes on the pinned version. Real Signal tests also verify
+100 concurrent replies with bidirectional traffic and repeated state reloads.
 
-The bot now invalidates only the affected sender device's session after two
-consecutive failures, at most once per minute while failures continue. Baileys'
-normal retry receipts request fresh encryption keys; account credentials and
-other sender sessions are retained. Look for `Reset stale sender session` in the
-logs, then send a new `.ping` from the connected account. Recovery depends on the
-sender/phone responding to the retry; previously unreadable messages may not be
-recoverable.
+The earlier manual sender-session deletion and self-chat key-refresh workarounds
+have been removed. Session establishment, identity changes and retry receipts are
+handled by the upstream protocol implementation.
 
-Run only one bot process per auth directory and retain the same writable auth
-volume across deployments. Duplicate writers or restoring an old auth backup can
-leave ratchets stale; the error alone does not establish which caused the drift.
-If fresh messages still fail after updating and restarting the bot, stop duplicate
-instances first, then unlink and re-pair the affected account through the dashboard.
+Rebuild the deployment to install the pinned dependency (restarting an old image
+is insufficient). Startup must show `WhatsApp protocol: Baileys 7.0.0-rc14`.
+For Docker, run `docker compose up -d --build`; for native Node, use `npm ci`
+and restart the process. Retain the auth volume, and run one bot per account.
 
-### Phone shows `Waiting for this message` for bot replies
+Send several new .ping/.menu commands from the linked account with WhatsApp open
+on the phone. Existing unreadable placeholders may not recover. If fresh replies
+still fail, use the dashboard Logout flow and link the account again to regenerate
+its previously damaged state. Do not restore the old auth backup afterward.
 
-If the logs show `Command: .menu` but the reply is unreadable on the phone,
-incoming command decryption succeeded and outgoing delivery needs attention.
-Before the first private reply on each connection, the bot refreshes the account's
-device list and establishes fresh outgoing sessions for its primary phone and
-linked devices. Look for `Self-chat encryption refreshed` in the logs. A failed
-key query blocks the send and is retried on the next command.
-
-After deploying this fix, restart the bot and send a new `.ping` from the linked
-account with WhatsApp open on the phone. Old placeholders are not automatically
-replaced by this refresh. If new replies remain unreadable, unlink the bot under
-WhatsApp **Linked devices**, then re-pair it through the dashboard. Confirm that
-only one bot uses that account's saved auth directory.
+Logs show delivery-retry payload availability and message status (2 = server ack,
+3 = delivered, 4 = read). A server ack alone does not prove phone decryption.
+Phone-level live verification is still required after deployment.
 
 ### Q1: Pairing Code says "Timeout" or does not show on screen
 - Make sure you entered the phone number with the full country code and without leading zeroes or `+` (e.g. `923320000000`, NOT `03320000000`).

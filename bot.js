@@ -23,7 +23,6 @@ import {
     fetchLatestWaWebVersion,
     makeCacheableSignalKeyStore,
     Browsers,
-    DEFAULT_CONNECTION_CONFIG,
     proto,
     WAMessageStubType,
     downloadContentFromMessage,
@@ -33,6 +32,7 @@ import pino from 'pino';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'node:module';
 import { exec } from 'child_process';
 import crypto from 'crypto';
 
@@ -49,12 +49,12 @@ import { moderateGroupViewOnce } from './utils/viewOnceModeration.js';
 import { normalizeIncomingMessage, shouldHandleUpsert, isOwnerMessage, rememberMessage } from './utils/messageRouting.js';
 import { cleanOldDownloads } from './utils/media.js';
 import { resolveAuthDirectory } from './utils/authStorage.js';
-import { withSignalRecovery } from './utils/signalRecovery.js';
 import { PersonalRecovery, isPersonalChat } from './utils/personalRecovery.js';
 
 // ─── ESM __dirname polyfill ──────────────────────────────
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const runtimeRequire = createRequire(import.meta.url);
 
 // ─── Configuration ────────────────────────────────────────
 const PREFIX = process.env.PREFIX || '.';
@@ -755,8 +755,6 @@ async function startSession(session, options = {}) {
         },
         printQRInTerminal: false,
         logger: silentLogger,
-        makeSignalRepository: auth => withSignalRecovery(
-            DEFAULT_CONNECTION_CONFIG.makeSignalRepository(auth), auth.keys, { logger: silentLogger }),
         browser: Browsers.ubuntu('Chrome'),
         connectTimeoutMs: 60000,
         defaultQueryTimeoutMs: 60000,
@@ -765,35 +763,17 @@ async function startSession(session, options = {}) {
         generateHighQualityLinkPreview: true,
         syncFullHistory: false,
         shouldSyncHistoryMessage: () => false,
-        getMessage: async key => session.retryMessages.get(key.id)?.message,
+        getMessage: async key => {
+            const message = session.retryMessages.get(key.id)?.message;
+            console.log(`[${session.id}] delivery-retry id=${key.id} payload=${message ? 'available' : 'missing'}`);
+            return message;
+        },
     });
 
     session.sock = sock;
     // Keep sent payloads available when a recipient asks us to re-encrypt them.
     // This cache belongs to the account and survives socket reconnects.
     const sendMessage = sock.sendMessage.bind(sock);
-    let selfChatReady = null;
-    const prepareSelfChat = ownerJid => {
-        if (!selfChatReady) {
-            selfChatReady = (async () => {
-                // Restored sessions can decrypt incoming commands while the phone
-                // cannot decrypt our outgoing ratchet. Establish fresh sessions once
-                // per socket, including device 0 (the primary phone).
-                const devices = await sock.getUSyncDevices([ownerJid], false, true);
-                const ownUser = ownerJid.split('@')[0];
-                const jids = new Set([ownerJid]);
-                for (const { user, device } of devices) {
-                    if (user === ownUser) jids.add(`${user}${device ? `:${device}` : ''}@s.whatsapp.net`);
-                }
-                await sock.assertSessions([...jids], true);
-                console.log(`[${session.id}] Self-chat encryption refreshed for ${jids.size} device(s)`);
-            })().catch(error => {
-                selfChatReady = null;
-                throw error;
-            });
-        }
-        return selfChatReady;
-    };
     sock.sendMessage = async (...args) => {
         // Central privacy boundary covers commands and background group events.
         // Only successful tagall output may bypass private routing.
@@ -811,8 +791,6 @@ async function startSession(session, options = {}) {
             args[0] = privateJid;
             args[2] = { ...args[2] };
             delete args[2].quoted;
-            // Reactions are best effort and do not trigger an encryption refresh.
-            if (!args[1]?.react) await prepareSelfChat(privateJid);
         }
         args[1] = cleanOutgoingContent(args[1]);
         const sent = await sendMessage(...args);
@@ -1207,7 +1185,7 @@ function extractMediaMessage(message) {
 async function handleMessageUpdate(sock, update, session) {
     const jid = update.key?.remoteJid;
     const msgId = update.key?.id;
-    console.log(`[message-update] from=${jid} msgId=${msgId} stubType=${update.update?.messageStubType}`);
+    console.log(`[message-update] from=${jid} msgId=${msgId} status=${update.update?.status ?? 'none'} stubType=${update.update?.messageStubType}`);
     
     const protocol = normalizeIncomingMessage({ message: update.update?.message }).message?.protocolMessage;
     const isRevoke = update.update?.messageStubType === WAMessageStubType.REVOKE ||
@@ -1472,6 +1450,12 @@ function extractMessageText(msg) {
 // ─── Initialize All Sessions ──────────────────────────────
 async function initAllSessions() {
     await loadCommands();
+    const packageInfo = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'), 'utf8'));
+    const installedVersion = runtimeRequire('@whiskeysockets/baileys/package.json').version;
+    console.log(`WhatsApp protocol: Baileys ${installedVersion}`);
+    if (installedVersion !== packageInfo.dependencies['@whiskeysockets/baileys']) {
+        throw new Error('Installed Baileys differs from the pinned protocol version. Run npm ci or rebuild the deployment before opening WhatsApp sessions.');
+    }
     console.log(`WhatsApp session storage: ${sessionsBaseDir}`);
     if (process.env.RAILWAY_ENVIRONMENT_ID && !process.env.RAILWAY_VOLUME_MOUNT_PATH) {
         console.warn('No Railway volume detected. Attach a persistent volume at /app/auth before linking WhatsApp; otherwise redeployments can lose saved sessions.');

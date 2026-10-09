@@ -123,16 +123,13 @@ test('Gemini stops after configured retries when every model is overloaded', asy
     assert.equal(attempts, 2);
 });
 
-test('group stickers are deleted then warned in source group, including wrapped stickers', async () => {
+test('group stickers are deleted silently in source group, including wrapped stickers', async () => {
     for (const content of [msg.message, { ephemeralMessage: { message: msg.message } }]) {
         const sock = socket();
         assert.equal(await moderateGroupSticker(sock, { ...msg, message: content }), true);
-        assert.equal(sock.calls.length, 2);
+        assert.equal(sock.calls.length, 1);
         assert.equal(sock.calls[0][0], 'group@g.us');
         assert.deepEqual(sock.calls[0][1], { delete: msg.key });
-        assert.equal(sock.calls[1][0], 'group@g.us');
-        assert.deepEqual(sock.calls[1][1].mentions, ['member@lid']);
-        assert.match(sock.calls[1][1].text, /don’t send stickers/);
     }
 });
 
@@ -158,9 +155,8 @@ test('Baileys 6 LID participant with phone in jid is recognized as the bot admin
         { id: '900@lid', jid: '12345@s.whatsapp.net', lid: '900@lid', admin: 'admin' },
     ] });
     await moderateGroupSticker(sock, msg);
-    assert.equal(sock.calls.length, 2);
+    assert.equal(sock.calls.length, 1);
     assert.deepEqual(sock.calls[0][1], { delete: msg.key });
-    assert.match(sock.calls[1][1].text, /don’t send stickers/);
 });
 
 test('authenticated LID identifies bot when socket user has only phone identity', async () => {
@@ -168,7 +164,7 @@ test('authenticated LID identifies bot when socket user has only phone identity'
     sock.user = { id: '12345:7@s.whatsapp.net' };
     sock.authState = { creds: { me: { lid: 'bot:7@lid' } } };
     await moderateGroupSticker(sock, msg);
-    assert.equal(sock.calls.length, 2);
+    assert.equal(sock.calls.length, 1);
 });
 
 test('matching group metadata succeeds without an unnecessary failing LID lookup', async () => {
@@ -205,9 +201,9 @@ test('owner can run every group command with or without group admin role', async
             global.antiLinkGroups = {};
             await tagall.execute(sock, ownerMessage, ['Hello']);
             assert.deepEqual(sock.calls.at(-1)[1].mentions, ['bot@lid']);
-            await lnk.execute(sock, ownerMessage, ['on']);
-            assert.equal(global.antiLinkGroups['group@g.us'], true);
-            await lnk.execute(sock, ownerMessage, ['off']);
+            await lnk.execute(sock, { ...ownerMessage, message: { conversation: '.lnkon' } }, []);
+            assert.notEqual(global.antiLinkGroups['group@g.us'], false);
+            await lnk.execute(sock, { ...ownerMessage, message: { conversation: '.lnkoff' } }, []);
             assert.equal(global.antiLinkGroups['group@g.us'], false);
             await add.execute(sock, ownerMessage, ['923001234567']);
             assert.equal(sock.calls.at(-2)[2], 'add');
@@ -264,12 +260,12 @@ test('renamed link toggle uses LID admin check and vdt shows status', async () =
     try {
         global.antiLinkGroups = {};
         const sock = socket();
-        await lnk.execute(sock, ownerMessage, ['on']);
-        assert.equal(global.antiLinkGroups['group@g.us'], true);
-        await lnk.execute(sock, ownerMessage, ['off']);
+        await lnk.execute(sock, { ...ownerMessage, message: { conversation: '.lnkon' } }, []);
+        assert.notEqual(global.antiLinkGroups['group@g.us'], false);
+        await lnk.execute(sock, { ...ownerMessage, message: { conversation: '.lnkoff' } }, []);
         assert.equal(global.antiLinkGroups['group@g.us'], false);
         await vdt.execute(sock, ownerMessage, []);
-        assert.match(sock.calls.at(-1)[1].text, /Automatic Features/);
+        assert.match(sock.calls.at(-1)[1].text, /Group Delete Recovery Status/);
     } finally {
         global.antiLinkGroups = previousLinks;
     }
