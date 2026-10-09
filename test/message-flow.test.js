@@ -3,10 +3,11 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
-import { DisconnectReason, proto, WAMessageStubType } from '@whiskeysockets/baileys';
+import { DEFAULT_CONNECTION_CONFIG, DisconnectReason, proto, WAMessageStubType } from '@whiskeysockets/baileys';
 import { PersonalRecovery, isPersonalChat } from '../utils/personalRecovery.js';
 import * as routing from '../utils/messageRouting.js';
 import MessageStore from '../utils/messageStore.js';
+import { withSignalRecovery } from '../utils/signalRecovery.js';
 import { cleanOutgoingContent, userLabel } from '../utils/displayText.js';
 import { moderateGroupSticker } from '../utils/stickerModeration.js';
 import ping from '../commands/ping.js';
@@ -20,7 +21,7 @@ function harness() {
     const sockets = [], timers = [], sent = [];
     const commands = new Map([['ping', ping], ['op', op]]);
     const context = vm.createContext({
-        ...routing, MessageStore, PersonalRecovery, isPersonalChat, WAMessageStubType, cleanOutgoingContent, userLabel, moderateGroupSticker, path, proto, DisconnectReason, commands,
+        ...routing, MessageStore, withSignalRecovery, DEFAULT_CONNECTION_CONFIG, PersonalRecovery, isPersonalChat, WAMessageStubType, cleanOutgoingContent, userLabel, moderateGroupSticker, path, proto, DisconnectReason, commands,
         sessionsBaseDir: '/fake', __dirname: '/fake', PREFIX: '.', OWNER_NUMBER: '12345',
         process: { env: {} }, console: { log() {}, warn() {}, error() {} },
         fs: { existsSync: () => true, readdirSync: () => [], rmSync() {} },
@@ -56,6 +57,22 @@ function harness() {
 const message = (id, text = '.ping', extra = {}) => ({
     key: { id, remoteJid: '98765@s.whatsapp.net', fromMe: true, ...extra },
     message: { conversation: text }, messageTimestamp: Math.floor(Date.now() / 1000),
+});
+
+test('every socket installs sender-session recovery using its own auth key store', async () => {
+    const h = harness(), session = new h.context.Session('primary');
+    const sock = await h.context.startSession(session);
+    const writes = [];
+    const repository = sock.config.makeSignalRepository({
+        creds: {}, keys: {
+            get: async () => ({}),
+            set: async data => writes.push(data),
+        },
+    });
+    assert.equal(typeof repository.decryptMessage, 'function');
+    // A missing session is handled by Baileys retries, never reset unrelated keys.
+    await assert.rejects(repository.decryptMessage({ jid: '123:7@s.whatsapp.net', type: 'msg', ciphertext: Buffer.alloc(0) }));
+    assert.equal(writes.length, 0);
 });
 
 test('notify and fresh append execute once per session; old history does not execute', async () => {

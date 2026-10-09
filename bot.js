@@ -23,6 +23,7 @@ import {
     fetchLatestWaWebVersion,
     makeCacheableSignalKeyStore,
     Browsers,
+    DEFAULT_CONNECTION_CONFIG,
     proto,
     WAMessageStubType,
     downloadContentFromMessage,
@@ -48,6 +49,7 @@ import { moderateGroupViewOnce } from './utils/viewOnceModeration.js';
 import { normalizeIncomingMessage, shouldHandleUpsert, isOwnerMessage, rememberMessage } from './utils/messageRouting.js';
 import { cleanOldDownloads } from './utils/media.js';
 import { resolveAuthDirectory } from './utils/authStorage.js';
+import { withSignalRecovery } from './utils/signalRecovery.js';
 import { PersonalRecovery, isPersonalChat } from './utils/personalRecovery.js';
 
 // ─── ESM __dirname polyfill ──────────────────────────────
@@ -753,6 +755,8 @@ async function startSession(session, options = {}) {
         },
         printQRInTerminal: false,
         logger: silentLogger,
+        makeSignalRepository: auth => withSignalRecovery(
+            DEFAULT_CONNECTION_CONFIG.makeSignalRepository(auth), auth.keys, { logger: silentLogger }),
         browser: Browsers.ubuntu('Chrome'),
         connectTimeoutMs: 60000,
         defaultQueryTimeoutMs: 60000,
